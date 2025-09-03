@@ -14,7 +14,7 @@ import {
 	CreateTransactionSchema,
 	CreateTransactionSchemaType,
 } from "@/schema/transaction";
-import React, { ReactNode, useCallback } from "react";
+import React, { ReactNode, useCallback, useState } from "react";
 import {
 	Form,
 	FormControl,
@@ -34,6 +34,10 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { CreateTransactionAction } from "../_actions/transactions";
+import { toast } from "sonner";
+import { DateToUTC } from "@/lib/helpers";
 
 interface Props {
 	trigger: ReactNode;
@@ -49,6 +53,8 @@ export default function CreateTransaction({ trigger, type }: Props) {
 		},
 	});
 
+	const [open, setOpen] = useState(false);
+
 	const handleCategoryChange = useCallback(
 		(value: string) => {
 			form.setValue("category", value);
@@ -56,8 +62,44 @@ export default function CreateTransaction({ trigger, type }: Props) {
 		[form]
 	);
 
+	const queryClient = useQueryClient();
+
+	const { mutate, isPending } = useMutation({
+		mutationFn: CreateTransactionAction,
+		onSuccess: () => {
+			toast.success("Transaction Created Successfully", {
+				id: "create-transaction",
+			});
+			form.reset({
+				type,
+				description: "",
+				amount: 0,
+				date: new Date(),
+				category: undefined,
+			});
+
+			queryClient.invalidateQueries({
+				queryKey: ["overview"],
+			});
+
+			setOpen((prev) => !prev);
+		},
+	});
+
+	const onSubmit = useCallback(
+		(values: CreateTransactionSchemaType) => {
+			toast.loading("Creating Transaction...", { id: "create-transaction" });
+			mutate({
+				...values,
+				amount: Number(values.amount),
+				date: DateToUTC(values.date),
+			});
+		},
+		[mutate]
+	);
+
 	return (
-		<Dialog>
+		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>{trigger}</DialogTrigger>
 			<DialogContent>
 				<DialogHeader>
@@ -75,7 +117,7 @@ export default function CreateTransaction({ trigger, type }: Props) {
 					</DialogTitle>
 				</DialogHeader>
 				<Form {...form}>
-					<form className="space-y-6">
+					<form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
 						<FormField
 							control={form.control}
 							name="description"
@@ -98,11 +140,18 @@ export default function CreateTransaction({ trigger, type }: Props) {
 						<FormField
 							control={form.control}
 							name="amount"
-							render={() => (
+							render={({ field }) => (
 								<FormItem>
 									<FormLabel>Amount</FormLabel>
 									<FormControl>
-										<Input type="number" defaultValue={0} min={0} />
+										<Input
+											defaultValue={0}
+											type="number"
+											{...field}
+											min={0}
+											//@ts-expect-error type issue
+											value={field.value ?? 0}
+										/>
 									</FormControl>
 									<FormDescription>Transaction Amount</FormDescription>
 								</FormItem>
@@ -157,9 +206,12 @@ export default function CreateTransaction({ trigger, type }: Props) {
 											<PopoverContent className="w-auto p-0">
 												<Calendar
 													mode="single"
-													//@ts-expect-error type issue from selection
+													//@ts-expect-error type issue
 													selected={field.value}
-													onSelect={field.onChange}
+													onSelect={(value) => {
+														if (!value) return;
+														field.onChange(value);
+													}}
 													autoFocus
 												/>
 											</PopoverContent>
@@ -174,7 +226,7 @@ export default function CreateTransaction({ trigger, type }: Props) {
 						</div>
 					</form>
 				</Form>
-				{/* <DialogFooter>
+				<DialogFooter>
 					<DialogClose asChild>
 						<Button
 							type="button"
@@ -193,7 +245,7 @@ export default function CreateTransaction({ trigger, type }: Props) {
 					>
 						{isPending ? <Loader2 className="animate-spin" /> : "Create"}
 					</Button>
-				</DialogFooter> */}
+				</DialogFooter>
 			</DialogContent>
 		</Dialog>
 	);
