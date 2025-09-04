@@ -12,7 +12,7 @@ export default function Loading() {
 
 			<div className="container py-6">
 				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-					{[...Array(4)].map((_, i) => (
+					{[...Array(3)].map((_, i) => (
 						<Card key={i} className="w-full">
 							<CardContent className="p-6">
 								<Skeleton className="h-4 w-[60%] mb-4" />
