@@ -1,5 +1,7 @@
+import { currencies } from "./currencies";
+
 export function DateToUTC(date: Date | string | number): Date {
-	const d = new Date(date)
+	const d = new Date(date);
 	return new Date(
 		Date.UTC(
 			d.getFullYear(),
@@ -11,4 +13,10 @@ export function DateToUTC(date: Date | string | number): Date {
 			d.getMilliseconds()
 		)
 	);
+}
+
+export function GetFormatterForCurrency(currency: string) {
+	const locale = currencies.find((c) => c.value === currency)?.locale;
+
+	return new Intl.NumberFormat(locale, { style: "currency", currency });
 }
