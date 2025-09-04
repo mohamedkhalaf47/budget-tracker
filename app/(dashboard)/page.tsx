@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import CreateTransaction from "./_components/CreateTransaction";
+import Overview from "./_components/Overview";
 
 export default async function page() {
 	const user = await currentUser();
@@ -44,6 +45,7 @@ export default async function page() {
 					</div>
 				</div>
 			</div>
+			<Overview userSettings={userSettings} />
 		</div>
 	);
 }
