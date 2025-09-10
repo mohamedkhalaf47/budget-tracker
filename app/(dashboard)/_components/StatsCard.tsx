@@ -1,10 +1,7 @@
 "use client";
 import { GetBalanceStatsResponseType } from "@/app/api/stats/balance/route";
 import {
-	Card,
 	CardContent,
-	CardDescription,
-	CardHeader,
 } from "@/components/ui/card";
 import { UserSettings } from "@/lib/generated/prisma";
 import { DateToUTC, GetFormatterForCurrency } from "@/lib/helpers";
